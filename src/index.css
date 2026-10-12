@@ -1,0 +1,48 @@
+:root {
+  --primaria: #0369a1;
+  --secundaria: #2dd4bf;
+  --destaque: #34d399;
+  --fundo: #f0f9ff;
+  --texto: #0f172a;
+  font-family: system-ui, sans-serif;
+  color: var(--texto);
+  background: var(--fundo);
+}
+body { margin: 0; }
+.topbar { display: flex; align-items: center; gap: 24px; padding: 12px 24px; background: var(--primaria); color: #fff; }
+.topbar nav a { color: #fff; margin-right: 16px; text-decoration: none; opacity: 0.8; }
+.topbar nav a.active { opacity: 1; font-weight: 600; border-bottom: 2px solid var(--destaque); }
+.topbar .lang { margin-left: auto; }
+main { padding: 24px; max-width: 1200px; margin: 0 auto; }
+.toolbar { margin-bottom: 12px; }
+.pacientes { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; }
+.bolinha { display: inline-block; width: 12px; height: 12px; border-radius: 50%; vertical-align: middle; }
+.busca { padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; width: 100%; box-sizing: border-box; margin-bottom: 8px; font: inherit; }
+.lista button { background: none; border: none; color: var(--primaria); cursor: pointer; font-size: 16px; padding: 6px 0; }
+.novo { display: flex; flex-direction: column; gap: 12px; background: #fff; padding: 20px; border-radius: 8px; }
+.novo label { display: flex; flex-direction: column; gap: 4px; }
+.novo input { padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; }
+.novo button { background: var(--destaque); border: none; padding: 10px; border-radius: 6px; font-weight: 600; cursor: pointer; }
+.erro { color: #dc2626; font-size: 13px; }
+.detalhe { margin-top: 16px; background: #fff; padding: 16px; border-radius: 8px; }
+.detalhe button { padding: 6px 12px; border-radius: 6px; border: none; cursor: pointer; background: var(--destaque); font-weight: 600; margin-right: 8px; }
+.edicao { display: flex; flex-direction: column; gap: 10px; }
+.edicao label { display: flex; flex-direction: column; gap: 4px; }
+.edicao input, .edicao textarea { padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font: inherit; }
+.acoes { display: flex; gap: 8px; }
+@media (max-width: 720px) { .pacientes { grid-template-columns: 1fr; } }
+.agendar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; background: #fff; padding: 12px; border-radius: 8px; margin-bottom: 12px; }
+.agendar button { padding: 6px 12px; border-radius: 6px; border: none; cursor: pointer; background: var(--destaque); font-weight: 600; }
+.agendar button.ativo { background: var(--primaria); color: #fff; }
+.resumo-dia { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; background: #fff; padding: 10px 14px; border-radius: 8px; margin-bottom: 12px; }
+.resumo-dia span { background: var(--fundo); padding: 4px 10px; border-radius: 999px; font-size: 14px; }
+.detalhe-consulta span { font-weight: 600; margin-left: 8px; }
+.fc-event.cancelada { opacity: 0.4; text-decoration: line-through; }
+.fc-event.realizada { opacity: 0.75; }
+.fc-event.faltou { border: 2px dashed #dc2626; }
+.inativo { opacity: 0.5; }
+.lista li button { padding: 4px 8px; border-radius: 6px; border: none; cursor: pointer; background: var(--destaque); font-weight: 600; }
+.formulario-clinica { display: flex; flex-direction: column; gap: 12px; background: #fff; padding: 20px; border-radius: 8px; max-width: 420px; }
+.formulario-clinica label { display: flex; flex-direction: column; gap: 4px; }
+.formulario-clinica input { padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; }
+.formulario-clinica button { background: var(--destaque); border: none; padding: 10px; border-radius: 6px; font-weight: 600; cursor: pointer; }
