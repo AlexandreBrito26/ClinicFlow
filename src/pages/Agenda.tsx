@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import FullCalendar from "@fullcalendar/react";
 import timeGridPlugin from "@fullcalendar/timegrid";
@@ -18,6 +18,12 @@ interface Slot {
 
 const OPCOES_DURACAO = [15, 30, 45, 60, 90];
 
+const paraInputLocal = (iso: string) => {
+  const d = new Date(iso);
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
+};
+
 export default function Agenda() {
   const { t, i18n } = useTranslation();
   const { consultas, setConsultas, pacientes, profissionais, clinica } = useClinic();
@@ -33,8 +39,24 @@ export default function Agenda() {
   const [erro, setErro] = useState("");
   const [duracao, setDuracao] = useState(30);
   const [selecionadaId, setSelecionadaId] = useState<string | null>(null);
+  const [confirmandoCancelamento, setConfirmandoCancelamento] = useState(false);
+  const [confirmandoExclusao, setConfirmandoExclusao] = useState(false);
   const [filtroStatus, setFiltroStatus] = useState<"todos" | Consulta["status"]>("todos");
   const [filtroPaciente, setFiltroPaciente] = useState("todos");
+
+  const calendarRef = useRef<FullCalendar>(null);
+  const [mobile, setMobile] = useState(() => window.matchMedia("(max-width: 720px)").matches);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 720px)");
+    const onChange = (e: MediaQueryListEvent) => setMobile(e.matches);
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
+
+  useEffect(() => {
+    calendarRef.current?.getApi().changeView(mobile ? "timeGridDay" : "timeGridWeek");
+  }, [mobile]);
 
   const eventos = consultas
     .filter((c) => c.profissionalId === profId)
@@ -63,13 +85,51 @@ export default function Agenda() {
     cancelada: doDia.filter((c) => c.status === "cancelada").length,
   };
 
-  const mudarStatus = (status: Consulta["status"]) => {
+  const aplicarStatus = (status: Consulta["status"]) => {
     if (!selecionada) return;
     setConsultas((lista) => lista.map((c) => (c.id === selecionada.id ? { ...c, status } : c)));
+    setConfirmandoCancelamento(false);
+  };
+
+  const mudarStatus = (status: Consulta["status"]) => {
+    if (!selecionada) return;
+    if (status === "cancelada" && selecionada.status !== "cancelada") {
+      setConfirmandoCancelamento(true);
+      return;
+    }
+    aplicarStatus(status);
+  };
+
+  const excluirConsulta = () => {
+    if (!selecionada) return;
+    setConsultas((lista) => lista.filter((c) => c.id !== selecionada.id));
+    setSelecionadaId(null);
+    setConfirmandoExclusao(false);
+    setConfirmandoCancelamento(false);
+  };
+
+  const abrirNovoAgendamento = () => {
+    const d = new Date();
+    d.setMinutes(0, 0, 0);
+    d.setHours(d.getHours() + 1);
+    setConfirmandoCancelamento(false);
+    setConfirmandoExclusao(false);
+    setSelecionadaId(null);
+    setSlot({ inicio: d.toISOString(), fim: new Date(d.getTime() + duracao * 60 * 1000).toISOString() });
+    setErro("");
+  };
+
+  const alterarInicio = (valor: string) => {
+    if (!valor) return;
+    const ini = new Date(valor);
+    setSlot({ inicio: ini.toISOString(), fim: new Date(ini.getTime() + duracao * 60 * 1000).toISOString() });
+    setErro("");
   };
 
   const handleEventClick = (info: EventClickArg) => {
     setSlot(null);
+    setConfirmandoExclusao(false);
+    setConfirmandoCancelamento(false);
     setSelecionadaId(info.event.id);
   };
 
@@ -149,6 +209,7 @@ export default function Agenda() {
         <span>{t("statusCancelada")} {contagem.cancelada}</span>
       </div>
       <div className="toolbar">
+        <button type="button" onClick={abrirNovoAgendamento}>{t("novoAgendamento")}</button>
         <label>
           {t("profissional")}:{" "}
           <select value={profId} onChange={(e) => setProfId(e.target.value)}>
@@ -200,7 +261,34 @@ export default function Agenda() {
               {t(`status${s.charAt(0).toUpperCase()}${s.slice(1)}`)}
             </button>
           ))}
-          <button onClick={() => setSelecionadaId(null)}>{t("fechar")}</button>
+          {confirmandoExclusao ? (
+            <>
+              <span className="pergunta-cancelar">{t("perguntaExcluirConsulta")}</span>
+              <button className="perigo" onClick={excluirConsulta}>
+                {t("confirmarExcluir")}
+              </button>
+              <button type="button" onClick={() => setConfirmandoExclusao(false)}>
+                {t("voltar")}
+              </button>
+            </>
+          ) : confirmandoCancelamento ? (
+            <>
+              <span className="pergunta-cancelar">{t("perguntaCancelar")}</span>
+              <button className="perigo" onClick={() => aplicarStatus("cancelada")}>
+                {t("confirmarCancelar")}
+              </button>
+              <button type="button" onClick={() => setConfirmandoCancelamento(false)}>
+                {t("voltar")}
+              </button>
+            </>
+          ) : (
+            <>
+              <button className="perigo-suave" onClick={() => setConfirmandoExclusao(true)}>
+                {t("excluir")}
+              </button>
+              <button onClick={() => setSelecionadaId(null)}>{t("fechar")}</button>
+            </>
+          )}
         </div>
       )}
 
@@ -213,7 +301,13 @@ export default function Agenda() {
               timeStyle: "short",
             })}
           </strong>
-          <select value={pacienteId} onChange={(e) => setPacienteId(e.target.value)}>
+          <input
+            type="datetime-local"
+            aria-label={t("inicioConsulta")}
+            value={paraInputLocal(slot.inicio)}
+            onChange={(e) => alterarInicio(e.target.value)}
+          />
+          <select value={pacienteId} onChange={(e) => setPacienteId(e.target.value)} aria-label={t("paciente")}>
             {pacientes.map((p) => (
               <option key={p.id} value={p.id}>
                 {p.nome}
@@ -248,13 +342,32 @@ export default function Agenda() {
       )}
 
       <FullCalendar
+        ref={calendarRef}
         plugins={[timeGridPlugin, dayGridPlugin, interactionPlugin]}
-        initialView="timeGridWeek"
-        headerToolbar={{ left: "prev,next today", center: "title", right: "timeGridWeek,dayGridMonth" }}
+        initialView={mobile ? "timeGridDay" : "timeGridWeek"}
+        headerToolbar={{
+          left: "prev,next today",
+          center: mobile ? "" : "title",
+          right: mobile ? "timeGridDay,timeGridWeek" : "timeGridWeek,dayGridMonth",
+        }}
         locale={i18n.language === "pt" ? "pt-br" : "en"}
         events={eventos}
         dateClick={handleDateClick}
         eventClick={handleEventClick}
+        eventDidMount={(arg) => {
+          const el = arg.el;
+          const status = arg.event.classNames[0] ?? "";
+          const rotulo = status ? t(`status${status.charAt(0).toUpperCase()}${status.slice(1)}`) : "";
+          el.tabIndex = 0;
+          el.setAttribute("role", "button");
+          el.setAttribute("aria-label", [arg.event.title, rotulo].filter(Boolean).join(", "));
+          el.addEventListener("keydown", (e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              el.click();
+            }
+          });
+        }}
         editable
         eventDrop={handleEventDrop}
         height="auto"

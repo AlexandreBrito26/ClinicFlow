@@ -10,14 +10,17 @@ export default function Layout() {
   return (
     <div className="app">
       <header className="topbar">
-        <strong className="brand">{clinica.nome}</strong>
+        <div className="marca">
+          <strong className="brand">{clinica.nome}</strong>
+          <span className="tagline">{t("tagline")}</span>
+        </div>
         <nav>
           <NavLink to="/">{t("agenda")}</NavLink>
           <NavLink to="/pacientes">{t("pacientes")}</NavLink>
           <NavLink to="/profissionais">{t("navProfissionais")}</NavLink>
           <NavLink to="/configuracoes">{t("navConfig")}</NavLink>
         </nav>
-        <button className="lang" onClick={toggleLang}>
+        <button className="lang" onClick={toggleLang} aria-label={t("trocarIdioma")}>
           {i18n.language === "pt" ? "EN" : "PT"}
         </button>
       </header>

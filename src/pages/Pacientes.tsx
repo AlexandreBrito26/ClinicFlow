@@ -18,12 +18,13 @@ type FormData = z.infer<typeof schema>;
 
 export default function Pacientes() {
   const { t, i18n } = useTranslation();
-  const { pacientes: lista, setPacientes: setLista, consultas, profissionais } = useClinic();
+  const { pacientes: lista, setPacientes: setLista, consultas, setConsultas, profissionais } = useClinic();
   const [anotacao, setAnotacao] = useState("");
   const [busca, setBusca] = useState("");
   const [selecionado, setSelecionado] = useState<Paciente | null>(null);
   const [resumo, setResumo] = useState("");
   const [editando, setEditando] = useState(false);
+  const [confirmandoExclusao, setConfirmandoExclusao] = useState(false);
   const [edicao, setEdicao] = useState({ nome: "", telefone: "", observacoes: "" });
   const [erroEdicao, setErroEdicao] = useState("");
 
@@ -61,6 +62,14 @@ export default function Pacientes() {
     setAnotacao("");
   };
 
+  const excluirPaciente = () => {
+    if (!selecionado) return;
+    setLista((l) => l.filter((p) => p.id !== selecionado.id));
+    setConsultas((c) => c.filter((x) => x.pacienteId !== selecionado.id));
+    setSelecionado(null);
+    setConfirmandoExclusao(false);
+  };
+
   const iniciarEdicao = () => {
     if (!selecionado) return;
     setEdicao({
@@ -91,7 +100,11 @@ export default function Pacientes() {
     setSelecionado(p);
     setEditando(false);
     setResumo("...");
-    setResumo(await resumirHistorico(p.historico));
+    try {
+      setResumo(await resumirHistorico(p.historico, i18n.language === "en" ? "en" : "pt"));
+    } catch {
+      setResumo(t("erroResumo"));
+    }
   };
 
   const termo = busca.trim().toLowerCase();
@@ -161,7 +174,27 @@ export default function Pacientes() {
                     <strong>{t("observacoes")}:</strong> {selecionado.observacoes}
                   </p>
                 )}
-                <button onClick={iniciarEdicao}>{t("editar")}</button>
+                <button onClick={iniciarEdicao}>{t("editar")}</button>{" "}
+                {confirmandoExclusao ? (
+                  <div className="confirmacao">
+                    <span className="pergunta-cancelar">
+                      {t("perguntaExcluirPaciente", {
+                        nome: selecionado.nome,
+                        n: consultas.filter((c) => c.pacienteId === selecionado.id).length,
+                      })}
+                    </span>
+                    <button className="perigo" onClick={excluirPaciente}>
+                      {t("confirmarExcluir")}
+                    </button>
+                    <button type="button" onClick={() => setConfirmandoExclusao(false)}>
+                      {t("voltar")}
+                    </button>
+                  </div>
+                ) : (
+                  <button className="perigo-suave" onClick={() => setConfirmandoExclusao(true)}>
+                    {t("excluirPaciente")}
+                  </button>
+                )}
               </>
             )}
             <p>

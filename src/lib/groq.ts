@@ -3,20 +3,36 @@
 const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
 const MODEL = "llama-3.3-70b-versatile";
 
-export async function resumirHistorico(historico: string[]): Promise<string> {
+export async function resumirHistorico(historico: string[], idioma: "pt" | "en" = "pt"): Promise<string> {
   const key = import.meta.env.VITE_GROQ_API_KEY;
-  if (!key) return "Configure VITE_GROQ_API_KEY para usar o resumo com IA.";
-  const res = await fetch(GROQ_URL, {
+  if (!key) throw new Error("VITE_GROQ_API_KEY ausente");
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 15000);
+  try {
+    const res = await fetch(GROQ_URL, {
     method: "POST",
+    signal: controller.signal,
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
     body: JSON.stringify({
       model: MODEL,
       messages: [
-        { role: "system", content: "Resuma em português, em até 3 frases, o histórico clínico a seguir." },
+        {
+          role: "system",
+          content:
+            idioma === "en"
+              ? "Summarize the following clinical history in English, in at most 3 sentences."
+              : "Resuma em português, em até 3 frases, o histórico clínico a seguir.",
+        },
         { role: "user", content: historico.join("\n") },
       ],
     }),
   });
-  const data = await res.json();
-  return data.choices?.[0]?.message?.content ?? "Não foi possível gerar o resumo.";
+    if (!res.ok) throw new Error(`Groq respondeu ${res.status}`);
+    const data = await res.json();
+    const texto = data.choices?.[0]?.message?.content;
+    if (typeof texto !== "string" || !texto.trim()) throw new Error("Resposta vazia da Groq");
+    return texto.trim();
+  } finally {
+    clearTimeout(timeout);
+  }
 }
