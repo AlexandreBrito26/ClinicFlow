@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.1.2
+
+- Barra superior escura no modo noite, sem competir com o conteúdo.
+
+## 2.1.1
+
+- Correção: botões do calendário (Semana, Mês, Hoje, dia inteiro) agora aparecem em português.
+
 ## 2.1.0
 
 - Notificações de confirmação para salvar, agendar, mudar status, excluir e exportar.

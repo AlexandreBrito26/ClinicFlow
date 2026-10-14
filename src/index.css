@@ -487,3 +487,17 @@ table.rel td:not(:first-child), table.rel th:not(:first-child) { text-align: rig
   .detalhe { box-shadow: none; border: none; backdrop-filter: none; }
   main { padding: 0; max-width: none; }
 }
+
+/* ===================== Topo no modo noite ===================== */
+:root[data-theme="noite"] .topbar {
+  background: rgba(8, 14, 28, 0.82);
+  color: #e2e8f0;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.16);
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.4);
+}
+:root[data-theme="noite"] .topbar nav a { color: #cbd5e1; }
+:root[data-theme="noite"] .topbar nav a:hover { background: rgba(148, 163, 184, 0.12); }
+:root[data-theme="noite"] .topbar nav a.active { background: #1e3a5f; color: #e0f2fe; border-bottom: none; }
+:root[data-theme="noite"] .topbar .lang { color: #e2e8f0; border-color: rgba(148, 163, 184, 0.4); }
+:root[data-theme="noite"] .topbar .tema { background: rgba(148, 163, 184, 0.12); border-color: rgba(148, 163, 184, 0.35); color: #e2e8f0; }
+:root[data-theme="noite"] .tagline { color: #94a3b8; opacity: 1; }

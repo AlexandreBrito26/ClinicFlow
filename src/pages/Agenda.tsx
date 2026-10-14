@@ -7,6 +7,7 @@ import interactionPlugin from "@fullcalendar/interaction";
 import type { DateClickArg } from "@fullcalendar/interaction";
 import type { EventClickArg } from "@fullcalendar/core";
 import type { EventDropArg } from "@fullcalendar/core";
+import ptBrLocale from "@fullcalendar/core/locales/pt-br";
 import { useClinic } from "../store/clinicStore";
 import type { Consulta } from "../types";
 import { conflitaHorario, dentroDoHorario } from "../lib/agenda";
@@ -376,6 +377,7 @@ export default function Agenda() {
           right: mobile ? "timeGridDay,timeGridWeek" : "timeGridWeek,dayGridMonth",
         }}
         locale={i18n.language === "pt" ? "pt-br" : "en"}
+        locales={[ptBrLocale]}
         events={eventos}
         dateClick={handleDateClick}
         eventClick={handleEventClick}
