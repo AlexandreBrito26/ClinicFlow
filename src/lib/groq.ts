@@ -1,10 +1,12 @@
 // Camada de IA (Fase 3). A chave vem de VITE_GROQ_API_KEY.
 // Atenção: chamar a Groq direto do navegador expõe a chave. Use só para protótipo.
+import { lerChaveGroq } from "./groqKey";
+
 const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
 const MODEL = "llama-3.3-70b-versatile";
 
 export async function resumirHistorico(historico: string[], idioma: "pt" | "en" = "pt"): Promise<string> {
-  const key = import.meta.env.VITE_GROQ_API_KEY;
+  const key = lerChaveGroq() ?? import.meta.env.VITE_GROQ_API_KEY;
   if (!key) throw new Error("VITE_GROQ_API_KEY ausente");
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 15000);

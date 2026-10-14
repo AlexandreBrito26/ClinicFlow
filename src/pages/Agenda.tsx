@@ -7,9 +7,13 @@ import interactionPlugin from "@fullcalendar/interaction";
 import type { DateClickArg } from "@fullcalendar/interaction";
 import type { EventClickArg } from "@fullcalendar/core";
 import type { EventDropArg } from "@fullcalendar/core";
-import { useClinic } from "../store/ClinicContext";
+import { useClinic } from "../store/clinicStore";
 import type { Consulta } from "../types";
 import { conflitaHorario, dentroDoHorario } from "../lib/agenda";
+import { chaveStatus } from "../lib/status";
+import { gerarICS } from "../lib/ics";
+import { baixar } from "../lib/download";
+import { useToast } from "../store/toast";
 
 interface Slot {
   inicio: string;
@@ -26,14 +30,13 @@ const paraInputLocal = (iso: string) => {
 
 export default function Agenda() {
   const { t, i18n } = useTranslation();
+  const { notificar } = useToast();
   const { consultas, setConsultas, pacientes, profissionais, clinica } = useClinic();
-  const [profId, setProfId] = useState(profissionais[0].id);
+  const [profIdEscolhido, setProfIdEscolhido] = useState(profissionais[0].id);
+  const profId = profissionais.some((p) => p.id === profIdEscolhido && p.ativo)
+    ? profIdEscolhido
+    : (profissionais.find((p) => p.ativo)?.id ?? profIdEscolhido);
 
-  useEffect(() => {
-    const atual = profissionais.find((p) => p.id === profId);
-    const ativo = profissionais.find((p) => p.ativo);
-    if (atual && !atual.ativo && ativo) setProfId(ativo.id);
-  }, [profissionais, profId]);
   const [slot, setSlot] = useState<Slot | null>(null);
   const [pacienteId, setPacienteId] = useState(pacientes[0].id);
   const [erro, setErro] = useState("");
@@ -73,7 +76,7 @@ export default function Agenda() {
 
   const selecionada = consultas.find((c) => c.id === selecionadaId) ?? null;
 
-  const hojeStr = new Date().toDateString();
+  const [hojeStr] = useState(() => new Date().toDateString());
   const doDia = consultas.filter(
     (c) => c.profissionalId === profId && new Date(c.inicio).toDateString() === hojeStr,
   );
@@ -88,6 +91,7 @@ export default function Agenda() {
   const aplicarStatus = (status: Consulta["status"]) => {
     if (!selecionada) return;
     setConsultas((lista) => lista.map((c) => (c.id === selecionada.id ? { ...c, status } : c)));
+    notificar(t("toastStatus"));
     setConfirmandoCancelamento(false);
   };
 
@@ -103,9 +107,16 @@ export default function Agenda() {
   const excluirConsulta = () => {
     if (!selecionada) return;
     setConsultas((lista) => lista.filter((c) => c.id !== selecionada.id));
+    notificar(t("toastExcluida"));
     setSelecionadaId(null);
     setConfirmandoExclusao(false);
     setConfirmandoCancelamento(false);
+  };
+
+  const exportarIcs = () => {
+    const doProf = consultas.filter((c) => c.profissionalId === profId && c.status !== "cancelada");
+    baixar(`agenda-${profId}.ics`, gerarICS(doProf, pacientes, profissionais), "text/calendar");
+    notificar(t("toastExportada"));
   };
 
   const abrirNovoAgendamento = () => {
@@ -155,11 +166,18 @@ export default function Agenda() {
     );
   };
 
+  const noPassado = (inicio: string) => new Date(inicio) < new Date();
+
   const handleEventDrop = (info: EventDropArg) => {
     const inicio = info.event.start!.toISOString();
     const fim = info.event.end
       ? info.event.end.toISOString()
       : new Date(info.event.start!.getTime() + duracao * 60 * 1000).toISOString();
+    if (noPassado(inicio)) {
+      setErro(t("noPassado"));
+      info.revert();
+      return;
+    }
     if (!dentroDoAtendimento(inicio, fim)) {
       setErro(t("foraExpediente"));
       info.revert();
@@ -178,6 +196,10 @@ export default function Agenda() {
 
   const agendar = () => {
     if (!slot) return;
+    if (noPassado(slot.inicio)) {
+      setErro(t("noPassado"));
+      return;
+    }
     if (!dentroDoAtendimento(slot.inicio, slot.fim)) {
       setErro(t("foraExpediente"));
       return;
@@ -195,6 +217,7 @@ export default function Agenda() {
       status: "agendada",
     };
     setConsultas((c) => [...c, nova]);
+    notificar(t("toastAgendada"));
     setSlot(null);
   };
 
@@ -210,9 +233,10 @@ export default function Agenda() {
       </div>
       <div className="toolbar">
         <button type="button" onClick={abrirNovoAgendamento}>{t("novoAgendamento")}</button>
+        <button type="button" onClick={exportarIcs}>{t("exportarAgenda")}</button>
         <label>
           {t("profissional")}:{" "}
-          <select value={profId} onChange={(e) => setProfId(e.target.value)}>
+          <select value={profId} onChange={(e) => setProfIdEscolhido(e.target.value)}>
             {profissionais.filter((p) => p.ativo).map((p) => (
               <option key={p.id} value={p.id}>
                 {p.nome} — {p.especialidade}
@@ -225,7 +249,7 @@ export default function Agenda() {
             <option value="todos">{t("todosStatus")}</option>
             {(["agendada", "realizada", "faltou", "cancelada"] as const).map((s) => (
               <option key={s} value={s}>
-                {t(`status${s.charAt(0).toUpperCase()}${s.slice(1)}`)}
+                {t(chaveStatus(s))}
               </option>
             ))}
           </select>
@@ -258,7 +282,7 @@ export default function Agenda() {
               className={selecionada.status === s ? "ativo" : ""}
               onClick={() => mudarStatus(s)}
             >
-              {t(`status${s.charAt(0).toUpperCase()}${s.slice(1)}`)}
+              {t(chaveStatus(s))}
             </button>
           ))}
           {confirmandoExclusao ? (
@@ -337,10 +361,11 @@ export default function Agenda() {
           </select>
           <button onClick={agendar}>{t("agendar")}</button>
           <button onClick={() => setSlot(null)}>{t("cancelar")}</button>
-          {erro && <span className="erro">{erro}</span>}
+          {erro && <span className="erro" role="alert">{erro}</span>}
         </div>
       )}
 
+      {eventos.length === 0 && <p className="vazio">{t("agendaVazia")}</p>}
       <FullCalendar
         ref={calendarRef}
         plugins={[timeGridPlugin, dayGridPlugin, interactionPlugin]}
@@ -357,7 +382,7 @@ export default function Agenda() {
         eventDidMount={(arg) => {
           const el = arg.el;
           const status = arg.event.classNames[0] ?? "";
-          const rotulo = status ? t(`status${status.charAt(0).toUpperCase()}${status.slice(1)}`) : "";
+          const rotulo = status ? t(chaveStatus(status)) : "";
           el.tabIndex = 0;
           el.setAttribute("role", "button");
           el.setAttribute("aria-label", [arg.event.title, rotulo].filter(Boolean).join(", "));

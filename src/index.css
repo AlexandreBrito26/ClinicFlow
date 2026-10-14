@@ -20,23 +20,12 @@
   background: var(--fundo);
   line-height: 1.5;
   color-scheme: light;
+  background: var(--fundo);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --fundo: #0b1220;
-    --superficie: #111b2e;
-    --borda: #334155;
-    --texto: #e2e8f0;
-    --texto-suave: #94a3b8;
-    --erro: #f87171;
-    --sombra: 0 1px 2px rgba(0, 0, 0, 0.4);
-    color-scheme: dark;
-  }
-}
 
 * { box-sizing: border-box; }
-body { margin: 0; min-height: 100vh; }
+body { margin: 0; min-height: 100vh; background: transparent; }
 
 :focus-visible { outline: none; box-shadow: var(--foco); border-radius: 6px; }
 
@@ -264,3 +253,237 @@ textarea { min-height: 80px; resize: vertical; }
   .resumo-dia span { font-size: 13px; }
 }
 .fc-event:focus-visible { outline: none; box-shadow: var(--foco); }
+.anotacoes li { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.anotacoes li span { flex: 1; }
+.anotacoes li input { flex: 1; min-width: 180px; }
+
+/* ===================== Tema dia / noite ===================== */
+:root[data-theme="noite"] {
+  --fundo: #070d1a;
+  --superficie: rgba(17, 27, 46, 0.72);
+  --borda: rgba(148, 163, 184, 0.22);
+  --texto: #e2e8f0;
+  --texto-suave: #94a3b8;
+  --erro: #f87171;
+  --primaria: #38bdf8;
+  --primaria-escura: #0ea5e9;
+  --sombra: 0 1px 2px rgba(0, 0, 0, 0.5), 0 8px 24px rgba(0, 0, 0, 0.35);
+  --foco: 0 0 0 3px rgba(56, 189, 248, 0.45);
+  color-scheme: dark;
+}
+:root[data-theme="dia"] {
+  --superficie: rgba(255, 255, 255, 0.78);
+  --borda: rgba(15, 23, 42, 0.12);
+}
+
+/* ===================== Céu animado ===================== */
+.ceu {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  overflow: hidden;
+  background: linear-gradient(180deg, #bae6fd 0%, #e0f2fe 45%, #f0f9ff 100%);
+  transition: background 1.2s ease;
+}
+:root[data-theme="noite"] .ceu {
+  background: linear-gradient(180deg, #020617 0%, #0b1e3a 60%, #102a4c 100%);
+}
+
+.astro {
+  position: absolute;
+  top: 9%;
+  left: 74%;
+  width: 110px;
+  height: 110px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #fef3c7, #fbbf24 55%, rgba(251, 191, 36, 0) 72%);
+  filter: blur(0.5px);
+  box-shadow: 0 0 80px 20px rgba(251, 191, 36, 0.35);
+  transition: background 1.2s ease, box-shadow 1.2s ease;
+  animation: deriva 26s ease-in-out infinite alternate;
+}
+:root[data-theme="noite"] .astro {
+  background: radial-gradient(circle at 35% 35%, #f8fafc, #cbd5e1 60%, rgba(203, 213, 225, 0) 72%);
+  box-shadow: 0 0 60px 12px rgba(203, 213, 225, 0.25);
+}
+
+.nuvem {
+  position: absolute;
+  height: 70px;
+  width: 260px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.55);
+  filter: blur(14px);
+  opacity: 0.8;
+  transition: opacity 1.2s ease;
+}
+.n1 { top: 18%; left: -10%; animation: nuvem 60s linear infinite; }
+.n2 { top: 42%; left: -25%; width: 340px; animation: nuvem 85s linear infinite reverse; animation-delay: -30s; }
+:root[data-theme="noite"] .nuvem { opacity: 0.08; }
+
+.estrelas {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 1.2s ease;
+  background-image:
+    radial-gradient(1.5px 1.5px at 12% 18%, #fff, transparent),
+    radial-gradient(1px 1px at 28% 62%, #e2e8f0, transparent),
+    radial-gradient(1.5px 1.5px at 44% 26%, #fff, transparent),
+    radial-gradient(1px 1px at 58% 78%, #cbd5e1, transparent),
+    radial-gradient(1.5px 1.5px at 71% 38%, #fff, transparent),
+    radial-gradient(1px 1px at 86% 14%, #e2e8f0, transparent),
+    radial-gradient(1px 1px at 92% 70%, #fff, transparent),
+    radial-gradient(1.5px 1.5px at 6% 84%, #cbd5e1, transparent);
+  animation: cintilar 5s ease-in-out infinite alternate;
+}
+:root[data-theme="noite"] .estrelas { opacity: 1; }
+
+@keyframes deriva {
+  from { transform: translate(0, 0); }
+  to { transform: translate(-60px, 24px); }
+}
+@keyframes nuvem {
+  from { transform: translateX(0); }
+  to { transform: translateX(160vw); }
+}
+@keyframes cintilar {
+  from { opacity: 0.55; }
+  to { opacity: 1; }
+}
+
+/* ===================== Marca ===================== */
+.marca { display: flex; align-items: center; gap: 10px; }
+.marca > div { display: flex; flex-direction: column; line-height: 1.15; }
+.logo { display: block; flex-shrink: 0; filter: drop-shadow(0 2px 6px rgba(3, 105, 161, 0.35)); }
+.logo-pulso {
+  stroke-dasharray: 60;
+  stroke-dashoffset: 60;
+  animation: pulso 2.8s ease-in-out infinite;
+}
+@keyframes pulso {
+  0% { stroke-dashoffset: 60; }
+  50% { stroke-dashoffset: 0; }
+  100% { stroke-dashoffset: -60; }
+}
+
+/* ===================== Topo vidro ===================== */
+.topbar {
+  background: color-mix(in srgb, var(--primaria) 88%, transparent);
+  backdrop-filter: saturate(160%) blur(12px);
+  -webkit-backdrop-filter: saturate(160%) blur(12px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+.topbar .tema {
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border-radius: 999px;
+  font-size: 16px;
+  display: grid;
+  place-items: center;
+}
+.topbar .tema:hover { background: rgba(255, 255, 255, 0.24); }
+
+/* ===================== Cartões em vidro ===================== */
+.novo, .formulario-clinica, .detalhe, .agendar, .resumo-dia, .lista li {
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid var(--borda);
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+.lista li:hover { transform: translateY(-1px); }
+
+/* ===================== Foco e transições ===================== */
+button, input, select, textarea { transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease, filter 0.15s ease; }
+.fc { transition: opacity 0.2s ease; }
+
+@media (prefers-reduced-motion: reduce) {
+  .astro, .nuvem, .estrelas, .logo-pulso { animation: none !important; }
+  .ceu, .astro, .nuvem, .estrelas { transition: none !important; }
+}
+
+.pular { position: absolute; left: -999px; top: 8px; z-index: 30; background: #fff; color: var(--primaria); padding: 8px 12px; border-radius: 8px; font-weight: 600; }
+.pular:focus { left: 12px; }
+.bloco-config { background: var(--superficie); border: 1px solid var(--borda); border-radius: var(--raio); box-shadow: var(--sombra); padding: 18px; margin-top: 20px; max-width: 420px; display: flex; flex-direction: column; gap: 10px; backdrop-filter: blur(10px); }
+.bloco-config label { display: flex; flex-direction: column; gap: 6px; font-weight: 600; color: var(--texto-suave); }
+.bloco-config input { padding: 9px 11px; border: 1px solid var(--borda); border-radius: 8px; }
+.suave { color: var(--texto-suave); font-size: 14px; margin: 0; }
+
+/* ===================== Carregamento e vazio ===================== */
+.esqueleto {
+  height: 60vh;
+  margin: 24px auto;
+  max-width: 1200px;
+  border-radius: 12px;
+  background: linear-gradient(90deg, var(--superficie) 25%, rgba(148, 163, 184, 0.18) 50%, var(--superficie) 75%);
+  background-size: 200% 100%;
+  animation: brilho 1.4s linear infinite;
+}
+@keyframes brilho {
+  from { background-position: 200% 0; }
+  to { background-position: -200% 0; }
+}
+.vazio {
+  padding: 24px;
+  text-align: center;
+  border: 1px dashed var(--borda);
+  border-radius: var(--raio);
+  color: var(--texto-suave);
+  background: var(--superficie);
+}
+.ajuda { font-size: 12px; color: var(--texto-suave); font-weight: 400; }
+
+/* ===================== Celular: navegação na base ===================== */
+@media (max-width: 800px) {
+  .topbar nav {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 20;
+    justify-content: space-around;
+    background: var(--primaria);
+    padding: 6px 8px calc(6px + env(safe-area-inset-bottom, 0px));
+    box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.15);
+  }
+  .topbar nav a { flex: 1; text-align: center; padding: 10px 6px; font-size: 14px; }
+  main { padding-bottom: 96px; }
+}
+
+/* ===================== Notificações ===================== */
+.toasts { position: fixed; right: 20px; bottom: 20px; z-index: 40; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+.toast {
+  background: var(--primaria-escura);
+  color: #fff;
+  padding: 10px 16px;
+  border-radius: 10px;
+  box-shadow: var(--sombra);
+  font-weight: 600;
+  font-size: 14px;
+  animation: entrada 0.2s ease-out;
+}
+@media (max-width: 800px) { .toasts { bottom: 84px; left: 16px; right: 16px; } }
+
+/* ===================== Relatórios e cabeçalhos ===================== */
+.cabecalho-pagina { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.tabela-wrap { overflow-x: auto; background: var(--superficie); border-radius: var(--raio); box-shadow: var(--sombra); margin: 14px 0; }
+table.rel { width: 100%; border-collapse: collapse; font-size: 14px; }
+table.rel th, table.rel td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--borda); }
+table.rel th { color: var(--texto-suave); font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; }
+table.rel td:not(:first-child), table.rel th:not(:first-child) { text-align: right; font-variant-numeric: tabular-nums; }
+.arquivo { font-weight: 600; color: var(--texto-suave); cursor: pointer; }
+.arquivo input { margin-top: 6px; font-weight: 400; }
+
+/* ===================== Impressão ===================== */
+@media print {
+  .topbar, .ceu, .toasts, .busca, .lista, .novo, .acoes, .detalhe button, .pacientes > div:first-child h2, .pular { display: none !important; }
+  body { background: #fff; }
+  .pacientes { display: block; }
+  .detalhe { box-shadow: none; border: none; backdrop-filter: none; }
+  main { padding: 0; max-width: none; }
+}

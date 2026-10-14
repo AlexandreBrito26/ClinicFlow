@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useTranslation } from "react-i18next";
-import { useClinic } from "../store/ClinicContext";
+import { useClinic } from "../store/clinicStore";
 
 const HORA = /^([01]\d|2[0-3]):[0-5]\d$/;
 
@@ -31,7 +31,9 @@ const PADRAO: FormData = {
 
 export default function Profissionais() {
   const { t } = useTranslation();
-  const { profissionais, setProfissionais } = useClinic();
+  const { profissionais, setProfissionais, consultas } = useClinic();
+  const futurasDe = (id: string) =>
+    consultas.filter((c) => c.profissionalId === id && c.status === "agendada" && new Date(c.inicio) > new Date()).length;
   const [formAberto, setFormAberto] = useState(false);
   const [editandoId, setEditandoId] = useState<string | null>(null);
 
@@ -97,6 +99,7 @@ export default function Profissionais() {
             <span className="bolinha" style={{ background: p.cor }} /> {p.nome} — {p.especialidade}{" "}
             ({p.expediente.inicio}–{p.expediente.fim})
             {!p.ativo && <em> ({t("inativo")})</em>}{" "}
+            {!p.ativo && futurasDe(p.id) > 0 && <em>· {t("consultasFuturas", { n: futurasDe(p.id) })} </em>}
             <button onClick={() => abrirEdicao(p.id)}>{t("editar")}</button>{" "}
             <button onClick={() => alternarAtivo(p.id)}>{p.ativo ? t("desativar") : t("reativar")}</button>
           </li>
@@ -109,27 +112,27 @@ export default function Profissionais() {
           <label>
             {t("nome")}
             <input {...register("nome")} />
-            {errors.nome && <span className="erro">{t(errors.nome.message!)}</span>}
+            {errors.nome && <span className="erro" role="alert">{t(errors.nome.message!)}</span>}
           </label>
           <label>
             {t("especialidade")}
             <input {...register("especialidade")} />
-            {errors.especialidade && <span className="erro">{t(errors.especialidade.message!)}</span>}
+            {errors.especialidade && <span className="erro" role="alert">{t(errors.especialidade.message!)}</span>}
           </label>
           <label>
             {t("cor")}
             <input {...register("cor")} />
-            {errors.cor && <span className="erro">{t(errors.cor.message!)}</span>}
+            {errors.cor && <span className="erro" role="alert">{t(errors.cor.message!)}</span>}
           </label>
           <label>
             {t("expediente")} — {t("abertura")}
             <input type="time" {...register("expedienteInicio")} />
-            {errors.expedienteInicio && <span className="erro">{t(errors.expedienteInicio.message!)}</span>}
+            {errors.expedienteInicio && <span className="erro" role="alert">{t(errors.expedienteInicio.message!)}</span>}
           </label>
           <label>
             {t("expediente")} — {t("fechamento")}
             <input type="time" {...register("expedienteFim")} />
-            {errors.expedienteFim && <span className="erro">{t(errors.expedienteFim.message!)}</span>}
+            {errors.expedienteFim && <span className="erro" role="alert">{t(errors.expedienteFim.message!)}</span>}
           </label>
           <div className="acoes">
             <button type="submit">{editandoId ? t("salvarEdicao") : t("salvar")}</button>
